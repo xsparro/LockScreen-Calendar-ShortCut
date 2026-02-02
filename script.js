@@ -6,6 +6,7 @@ const CONFIG = {
   monthsToShow: 12,        // 12 = Year, 3 = Quarter, 1 = Month
   monthsPerRow: 3,         // Standard is 3
   monthOffset: 0,          // Start from 0 = Current, -1 = Previous, 1 = Next
+  fixedYearView: false,    // true = Jan always top-left, false = current month top-left
   contentScale: 1.0,       // Global Scale Multiplier (>1.0 bigger, <1.0 smaller)
 
   // Day & Dot Settings
@@ -360,9 +361,19 @@ if (CONFIG.showContainer) {
   let maxWeeksInLastRow = 0;
 
   for (let idx = lastRowStartIndex; idx < lastRowEndIndex; idx++) {
-    let targetMonthIndex = (currentMonth + CONFIG.monthOffset + idx);
-    let year = currentYear + Math.floor(targetMonthIndex / 12);
-    let month = ((targetMonthIndex % 12) + 12) % 12;
+    let targetMonthIndex, year, month;
+
+    if (CONFIG.fixedYearView) {
+      // Fixed year view: January is always first (index 0)
+      targetMonthIndex = CONFIG.monthOffset + idx;
+      month = ((targetMonthIndex % 12) + 12) % 12;
+      year = currentYear + Math.floor(targetMonthIndex / 12);
+    } else {
+      // Default: Current month is first
+      targetMonthIndex = (currentMonth + CONFIG.monthOffset + idx);
+      year = currentYear + Math.floor(targetMonthIndex / 12);
+      month = ((targetMonthIndex % 12) + 12) % 12;
+    }
 
     // Week calculation
     const firstDay = new Date(year, month, 1).getDay();
@@ -397,13 +408,18 @@ if (CONFIG.showContainer) {
 
 for (let i = CONFIG.monthOffset; i < CONFIG.monthOffset + CONFIG.monthsToShow; i++) {
   // Logic to handle month/year overflow
-  let targetMonthIndex = (currentMonth + i);
+  let targetMonthIndex, targetYear;
 
-  // Correction for negative indices (if we supported past months properly in the loop)
-  // Standard math for modulo with negatives
-  targetMonthIndex = ((targetMonthIndex % 12) + 12) % 12;
-
-  let targetYear = currentYear + Math.floor((currentMonth + i) / 12);
+  if (CONFIG.fixedYearView) {
+    // Fixed year view: January is always first (index 0)
+    targetMonthIndex = ((i % 12) + 12) % 12;
+    targetYear = currentYear + Math.floor(i / 12);
+  } else {
+    // Default: Current month is first
+    targetMonthIndex = (currentMonth + i);
+    targetYear = currentYear + Math.floor((currentMonth + i) / 12);
+    targetMonthIndex = ((targetMonthIndex % 12) + 12) % 12;
+  }
 
   // Adjust i for grid placement if we started with negative offset
   let gridIndex = i - CONFIG.monthOffset;
